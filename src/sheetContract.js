@@ -150,7 +150,7 @@ export function validateSettings(rows) {
     }
   }
   if (TIME_RE.test(String(values.get("open_time"))) && TIME_RE.test(String(values.get("close_time")))) {
-    if (toMinutes(values.get("close_time")) <= toMinutes(values.get("open_time"))) {
+    if (minutesOfDay(values.get("close_time")) <= minutesOfDay(values.get("open_time"))) {
       errors.push("close_time must be after open_time");
     }
   }
@@ -189,7 +189,11 @@ function toService([service_id, name, price_usd, duration_minutes, active]) {
 }
 
 function missingColumns(row, columns) {
-  return columns.filter((column) => !Object.hasOwn(row, column)).map((column) => `missing column ${column}`);
+  return columns.filter((column) => !hasOwn(row, column)).map((column) => `missing column ${column}`);
+}
+
+function hasOwn(row, column) {
+  return Object.prototype.hasOwnProperty.call(row, column);
 }
 
 function validateOpenDays(value) {
@@ -230,7 +234,7 @@ function hasEnoughDigits(value) {
   return (String(value).match(/\d/g) ?? []).length >= 7;
 }
 
-function toMinutes(value) {
+function minutesOfDay(value) {
   const [hours, minutes] = String(value).split(":").map(Number);
   return hours * 60 + minutes;
 }

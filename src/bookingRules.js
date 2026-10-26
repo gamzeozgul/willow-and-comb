@@ -118,6 +118,18 @@ function bookingInterval(booking, timeZone) {
   return { start, end: zonedWallTimeToDate(endDate, booking.end_time, timeZone) };
 }
 
+export function salonTimestamp(instant, timeZone) {
+  assertNow(instant);
+  const parts = salonParts(instant, timeZone);
+  const offsetMinutes = Math.round(offsetMs(instant, timeZone) / 60000);
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absolute = Math.abs(offsetMinutes);
+  const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
+  const minutes = String(absolute % 60).padStart(2, "0");
+  const clock = [parts.hour, parts.minute, parts.second].map((part) => String(part).padStart(2, "0")).join(":");
+  return `${formatDate(parts.year, parts.month, parts.day)}T${clock}${sign}${hours}:${minutes}`;
+}
+
 function salonDate(instant, timeZone) {
   const parts = salonParts(instant, timeZone);
   return formatDate(parts.year, parts.month, parts.day);
