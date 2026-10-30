@@ -43,6 +43,13 @@ function submitBooking(request) {
   });
 }
 
+function seedSheet() {
+  if (!Session.getActiveUser().getEmail()) {
+    throw new Error("Run seedSheet from the script editor, not from the booking page.");
+  }
+  seedSheet_();
+}
+
 function seedSheet_() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   spreadsheet.setSpreadsheetTimeZone("America/Chicago");
