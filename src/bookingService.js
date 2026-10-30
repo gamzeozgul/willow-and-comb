@@ -1,5 +1,5 @@
-import { canBook, salonTimestamp } from "./bookingRules.js";
-import { validateBooking } from "./sheetContract.js";
+import { canBook, readSettings, salonTimestamp } from "./bookingRules.js";
+import { validateBooking, validateSettings } from "./sheetContract.js";
 
 const MESSAGES = {
   past: "That time has already passed.",
@@ -12,6 +12,14 @@ const MESSAGES = {
   "unknown-service": "Please choose a service.",
   invalid: "Please check the name and email.",
 };
+
+export function describeSettings(rows) {
+  const errors = validateSettings(rows);
+  if (errors.length > 0) {
+    return { ok: false, message: `The studio settings need a fix: ${errors[0]}` };
+  }
+  return { ok: true, settings: readSettings(rows) };
+}
 
 export function publicCatalog(settings, services) {
   return {

@@ -443,6 +443,14 @@ var MESSAGES = {
   invalid: "Please check the name and email.",
 };
 
+function describeSettings(rows) {
+  const errors = validateSettings(rows);
+  if (errors.length > 0) {
+    return { ok: false, message: `The studio settings need a fix: ${errors[0]}` };
+  }
+  return { ok: true, settings: readSettings(rows) };
+}
+
 function publicCatalog(settings, services) {
   return {
     businessName: settings.businessName,

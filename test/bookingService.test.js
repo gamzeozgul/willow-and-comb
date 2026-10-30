@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readSettings } from "../src/bookingRules.js";
-import { bookAppointment, publicCatalog } from "../src/bookingService.js";
+import { bookAppointment, describeSettings, publicCatalog } from "../src/bookingService.js";
 import { seedServices, seedSettings } from "../src/sheetContract.js";
 
 const settings = readSettings(seedSettings);
@@ -48,6 +48,15 @@ describe("booking from the customer page", () => {
       "blow-dry",
       "root-color",
     ]);
+  });
+
+  it("names the first broken setting instead of opening the page", () => {
+    const rows = seedSettings.map((row) => ({ ...row }));
+    rows.find((row) => row.key === "open_days").value = "";
+    const described = describeSettings(rows);
+    assert.equal(described.ok, false);
+    assert.equal(described.message, "The studio settings need a fix: missing setting open_days");
+    assert.equal(describeSettings(seedSettings).ok, true);
   });
 
   it("writes one confirmed row and refuses the same slot immediately after", () => {

@@ -5,12 +5,11 @@ function doGet() {
 }
 
 function getCatalog() {
-  const settings = readSettings(readTable_("Settings", SETTING_COLUMNS));
-  return publicCatalog(settings, readTable_("Services", SERVICE_COLUMNS));
+  return publicCatalog(requireSettings_(), readTable_("Services", SERVICE_COLUMNS));
 }
 
 function getOpenSlots(serviceId) {
-  const settings = readSettings(readTable_("Settings", SETTING_COLUMNS));
+  const settings = requireSettings_();
   const services = readTable_("Services", SERVICE_COLUMNS);
   const service = services.find((row) => row.service_id === serviceId);
   return openSlots({
@@ -22,7 +21,7 @@ function getOpenSlots(serviceId) {
 }
 
 function submitBooking(request) {
-  const settings = readSettings(readTable_("Settings", SETTING_COLUMNS));
+  const settings = requireSettings_();
   return bookAppointment({
     settings,
     services: readTable_("Services", SERVICE_COLUMNS),
@@ -41,6 +40,12 @@ function submitBooking(request) {
       },
     },
   });
+}
+
+function requireSettings_() {
+  const described = describeSettings(readTable_("Settings", SETTING_COLUMNS));
+  if (!described.ok) throw new Error(described.message);
+  return described.settings;
 }
 
 function seedSheet() {
