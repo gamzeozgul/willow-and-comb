@@ -109,13 +109,13 @@ describe("booking from the customer page", () => {
     assert.equal(bookings.length, 0);
   });
 
-  it("accepts a filled-in company field without saving a row", () => {
+  it("accepts a filled-in hidden field without saving a row", () => {
     const bookings = [];
     const result = bookAppointment({
       settings,
       services: seedServices,
       now,
-      request: request({ company: "Acme" }),
+      request: request({ leave_blank: "Acme" }),
       store: memoryStore(bookings),
     });
     assert.equal(result.ok, true);

@@ -36,7 +36,7 @@ export function publicCatalog(settings, services) {
 }
 
 export function bookAppointment({ settings, services, now, request, store }) {
-  if (String(request.company || "").trim() !== "") return quietSuccess(settings, services, request);
+  if (String(request.leave_blank || "").trim() !== "") return quietSuccess(settings, services, request);
   return store.withLock(() => {
     const service = services.find((row) => row.service_id === request.service_id);
     const decision = canBook({
