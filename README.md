@@ -21,7 +21,7 @@ flowchart LR
   alarm --> owner
 ```
 
-The page is a Google Apps Script web app. It stays up when the computer is off. n8n is the free local edition, so mail goes out only while this computer is on.
+The page is a Google Apps Script web app. It stays up when the machine running n8n is off. n8n is the free local edition, so mail goes out only while that machine is on.
 
 Live page: https://script.google.com/macros/s/AKfycbyviDGh6xAi4F-o-XeS1zOkYGCVQnEBQFaBDFRJfEwJ7W0mcU-HwvRrwPE0vAC6S6ZB/exec
 
@@ -63,7 +63,7 @@ Cancel a booking by setting `status` to `cancelled`. Stop customer mail by setti
 
 ## Workflows
 
-Start n8n with `n8n start`, then open http://localhost:5678. Leave these on:
+Leave these on:
 
 | Workflow | When | What |
 | --- | --- | --- |
@@ -78,7 +78,16 @@ Leave these off:
 
 Customer mail includes a cancel line and `To stop these emails, reply STOP.` The salon mail does not. There is no confirmation mail.
 
-Import files are in `n8n/`. Connect the demo Google account. The spreadsheet id is the part of the sheet URL between `/d/` and `/edit`.
+## Setup
+
+1. `npm run build` writes `apps-script/Rules.gs`.
+2. In the Google Sheet, open Extensions, then Apps Script. Put `Code.gs`, `Index.html`, `Rules.gs`, and `appsscript.json` in that project.
+3. Run `seedSheet` from the editor. It fills Services and Settings. It clears Bookings.
+4. Deploy as a web app. Execute as yourself. Who has access: Anyone.
+5. On the machine that should send mail, run `n8n start` and open http://localhost:5678. Import the files in `n8n/`.
+6. Connect the Google account on every Sheets node and on Gmail.
+7. Replace `PASTE_WILLOW_SHEET_ID` with the id in the sheet URL, between `/d/` and `/edit`. Replace `PASTE_OWNER_EMAIL` with the owner's email.
+8. On Notify the salon, Remind tomorrow, Ask for a review, and Break on purpose, open the workflow settings and choose Report a failure as the error workflow. Do not set one on Report a failure. Leave that workflow off, and leave Break on purpose off.
 
 ## Checks
 
@@ -101,8 +110,8 @@ n8n polls the sheet. There is no public webhook. The page takes a lock and check
 
 ## Known limits
 
-- Salon mail can lag a few minutes, and only while local n8n is running.
-- The 08:00 reminder and the 19:30 review do not catch up if the computer was off.
+- Salon mail can lag a few minutes, and only while the machine running n8n is on.
+- The 08:00 reminder and the 19:30 review do not catch up if that machine was off.
 - The form enforces the rules. A row typed straight into the sheet is trusted.
 - A STOP reply is not read. The owner marks the sheet.
 - Date columns must stay plain text. A localized date is misread.
