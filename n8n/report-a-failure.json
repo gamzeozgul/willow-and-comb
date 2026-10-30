@@ -52,7 +52,7 @@
       "parameters": {
         "width": 460,
         "height": 180,
-        "content": "Sends to PASTE_OWNER_EMAIL when one of the salon workflows fails on its schedule.\n\nClicking Execute workflow does not send this mail. n8n only reports failures from a real run.\n\nThe address is fixed so a broken Sheet can still raise the alarm."
+        "content": "Replace PASTE_OWNER_EMAIL with the owner's email. The address stays in this node, not in the sheet, so a broken sheet can still raise the alarm.\n\nClicking Execute workflow does not send this mail. n8n only reports failures from a real run."
       }
     }
   ],
