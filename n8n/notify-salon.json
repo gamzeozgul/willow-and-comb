@@ -226,7 +226,7 @@
       "parameters": {
         "width": 520,
         "height": 200,
-        "content": "Paste the Willow & Comb spreadsheet id into Spreadsheet id. It is the long id in the sheet URL, between /d/ and /edit.\n\nConnect PASTE_OWNER_EMAIL on every Google Sheets node and on Gmail. Leave this workflow off until a test mail arrives."
+        "content": "Paste the Willow & Comb spreadsheet id into Spreadsheet id. It is the long id in the sheet URL, between /d/ and /edit.\n\nConnect the demo Google account on every Google Sheets node and on Gmail. This workflow stays on."
       }
     }
   ],
