@@ -57,7 +57,7 @@ If one of those three fails on its schedule, this mails the owner. It stays off.
 
 ## Sheet
 
-Three tabs: Services, Settings, Bookings. Hours, prices, the salon email, and the mail times live in the sheet, not in code. Seed rows are in `src/sheetContract.js`.
+Three tabs: Services, Settings, Bookings. Hours, prices, and the salon email live in the sheet, not in code. The 08:00 reminder and the 19:30 review are clocks in n8n. Seed rows are in `src/sheetContract.js`.
 
 Cancel a booking by setting `status` to `cancelled`. Stop customer mail by setting `email_opt_out` to `yes`. The salon still hears about that booking.
 

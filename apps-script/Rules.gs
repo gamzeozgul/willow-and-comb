@@ -42,12 +42,10 @@ var REQUIRED_SETTING_KEYS = [
   "slot_minutes",
   "min_lead_minutes",
   "booking_window_days",
-  "reminder_time",
-  "review_time",
 ];
 
 var WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-var TIME_KEYS = ["open_time", "close_time", "reminder_time", "review_time"];
+var TIME_KEYS = ["open_time", "close_time"];
 var INTEGER_KEYS = ["slot_minutes", "min_lead_minutes", "booking_window_days"];
 var MAIL_TIME_FIELDS = ["owner_notified_at", "reminder_sent_at", "review_sent_at"];
 
@@ -78,8 +76,6 @@ var seedSettings = [
   ["slot_minutes", "30"],
   ["min_lead_minutes", "120"],
   ["booking_window_days", "14"],
-  ["reminder_time", "08:00"],
-  ["review_time", "19:30"],
 ].map(([key, value]) => ({ key, value }));
 
 var seedBooking = {
@@ -251,8 +247,6 @@ function readSettings(rows) {
     slotMinutes: Number(values.slot_minutes),
     minLeadMinutes: Number(values.min_lead_minutes),
     bookingWindowDays: Number(values.booking_window_days),
-    reminderTime: values.reminder_time,
-    reviewTime: values.review_time,
   };
 }
 

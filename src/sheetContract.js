@@ -40,12 +40,10 @@ export const REQUIRED_SETTING_KEYS = [
   "slot_minutes",
   "min_lead_minutes",
   "booking_window_days",
-  "reminder_time",
-  "review_time",
 ];
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const TIME_KEYS = ["open_time", "close_time", "reminder_time", "review_time"];
+const TIME_KEYS = ["open_time", "close_time"];
 const INTEGER_KEYS = ["slot_minutes", "min_lead_minutes", "booking_window_days"];
 const MAIL_TIME_FIELDS = ["owner_notified_at", "reminder_sent_at", "review_sent_at"];
 
@@ -76,8 +74,6 @@ export const seedSettings = [
   ["slot_minutes", "30"],
   ["min_lead_minutes", "120"],
   ["booking_window_days", "14"],
-  ["reminder_time", "08:00"],
-  ["review_time", "19:30"],
 ].map(([key, value]) => ({ key, value }));
 
 export const seedBooking = {

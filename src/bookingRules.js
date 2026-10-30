@@ -15,8 +15,6 @@ export function readSettings(rows) {
     slotMinutes: Number(values.slot_minutes),
     minLeadMinutes: Number(values.min_lead_minutes),
     bookingWindowDays: Number(values.booking_window_days),
-    reminderTime: values.reminder_time,
-    reviewTime: values.review_time,
   };
 }
 

@@ -258,7 +258,7 @@
       "parameters": {
         "width": 540,
         "height": 200,
-        "content": "Runs at 08:00 America/Chicago, the reminder_time in Settings.\n\nEmails the customer when the appointment is tomorrow. Skips cancelled rows and rows with email_opt_out set to yes.\n\nIf the computer is off at 08:00, that morning is missed. It does not send late."
+        "content": "Runs at 08:00 America/Chicago. That clock is in this workflow, not in the sheet.\n\nEmails the customer when the appointment is tomorrow. Skips cancelled rows and rows with email_opt_out set to yes.\n\nIf the machine running n8n is off at 08:00, that morning is missed. It does not send late."
       }
     }
   ],

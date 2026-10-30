@@ -59,8 +59,6 @@ describe("sheet contract", () => {
     assert.equal(settings.slot_minutes, "30");
     assert.equal(settings.min_lead_minutes, "120");
     assert.equal(settings.booking_window_days, "14");
-    assert.equal(settings.reminder_time, "08:00");
-    assert.equal(settings.review_time, "19:30");
     assert.deepEqual(validateSettings(seedSettings), []);
   });
 
