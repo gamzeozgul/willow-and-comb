@@ -1,0 +1,83 @@
+{
+  "name": "Report a failure",
+  "versionId": "f7b1d4e5-9062-4da4-bf53-3e4b8c0d4010",
+  "nodes": [
+    {
+      "id": "f7b1d4e5-9062-4da4-bf53-3e4b8c0d4001",
+      "name": "On workflow failure",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "f7b1d4e5-9062-4da4-bf53-3e4b8c0d4002",
+      "name": "Email the owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R6rD4Y4ub2UAT97u",
+          "name": "Willow Gmail"
+        }
+      },
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "PASTE_OWNER_EMAIL",
+        "subject": "=Workflow failed: {{ $json.workflow.name }}",
+        "emailType": "text",
+        "message": "=A Willow & Comb workflow failed.\n\nWorkflow: {{ $json.workflow.name }}\nNode: {{ $json.execution.lastNodeExecuted || 'the trigger' }}\nError: {{ $json.execution.error.message || $json.trigger.error.message }}\n\n{{ $json.execution.url }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "f7b1d4e5-9062-4da4-bf53-3e4b8c0d4003",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        40
+      ],
+      "parameters": {
+        "width": 460,
+        "height": 180,
+        "content": "Sends to PASTE_OWNER_EMAIL when one of the salon workflows fails on its schedule.\n\nClicking Execute workflow does not send this mail. n8n only reports failures from a real run.\n\nThe address is fixed so a broken Sheet can still raise the alarm."
+      }
+    }
+  ],
+  "connections": {
+    "On workflow failure": {
+      "main": [
+        [
+          {
+            "node": "Email the owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

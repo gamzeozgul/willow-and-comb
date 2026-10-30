@@ -1,0 +1,70 @@
+{
+  "name": "Break on purpose",
+  "versionId": "a8c2e5f6-0173-4eb5-c064-4f5c9d1e5010",
+  "nodes": [
+    {
+      "id": "a8c2e5f6-0173-4eb5-c064-4f5c9d1e5001",
+      "name": "When clicked",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a8c2e5f6-0173-4eb5-c064-4f5c9d1e5002",
+      "name": "Fail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "throw new Error('This failure is a test.');\n"
+      }
+    },
+    {
+      "id": "a8c2e5f6-0173-4eb5-c064-4f5c9d1e5003",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        40
+      ],
+      "parameters": {
+        "width": 420,
+        "height": 140,
+        "content": "Test only. Leave this off.\n\nA click in the editor fails quietly. The failure mail is sent when this runs outside the editor."
+      }
+    }
+  ],
+  "connections": {
+    "When clicked": {
+      "main": [
+        [
+          {
+            "node": "Fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "JecPZPw39AXgBScO"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
