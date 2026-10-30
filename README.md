@@ -41,7 +41,15 @@ What n8n sends the salon.
 
 ![Notify the salon](screenshots/notify-salon.png)
 
-The workflow that polls the sheet and sends that mail. It stays on.
+Every 5 minutes. New confirmed bookings go to the salon.
+
+![Remind tomorrow](screenshots/remind-tomorrow.png)
+
+08:00 America/Chicago. Tomorrow's customers get a reminder.
+
+![Ask for a review](screenshots/ask-for-a-review.png)
+
+19:30 America/Chicago. A visit that already ended today gets a review mail.
 
 ## Sheet
 
