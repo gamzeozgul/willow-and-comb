@@ -70,6 +70,18 @@ describe("booking from the customer page", () => {
     ]);
   });
 
+  it("shows a new active service from the sheet", () => {
+    const bangs = {
+      service_id: "bangs-trim",
+      name: "Bangs trim",
+      price_usd: "25",
+      duration_minutes: "30",
+      active: "yes",
+    };
+    const catalog = publicCatalog(settings, [...seedServices, bangs]);
+    assert.ok(catalog.services.some((service) => service.service_id === "bangs-trim"));
+  });
+
   it("names the first broken setting instead of opening the page", () => {
     const rows = seedSettings.map((row) => ({ ...row }));
     rows.find((row) => row.key === "open_days").value = "";
