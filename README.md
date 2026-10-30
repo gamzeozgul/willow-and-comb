@@ -25,6 +25,24 @@ The page is a Google Apps Script web app. It stays up when the computer is off. 
 
 Live page: https://script.google.com/macros/s/AKfycbyviDGh6xAi4F-o-XeS1zOkYGCVQnEBQFaBDFRJfEwJ7W0mcU-HwvRrwPE0vAC6S6ZB/exec
 
+## Pictures
+
+![The booking page](screenshots/booking-page.png)
+
+The customer picks one day, then a time.
+
+![The Bookings sheet](screenshots/bookings-sheet.png)
+
+One confirmed visit. The salon mail and the reminder are already stamped. The review column stays empty until the visit has ended.
+
+![The salon mail](screenshots/salon-mail.png)
+
+What n8n sends the salon.
+
+![Notify the salon](screenshots/notify-salon.png)
+
+The workflow that polls the sheet and sends that mail. It stays on.
+
 ## Sheet
 
 Three tabs: Services, Settings, Bookings. Hours, prices, the salon email, and the mail times live in the sheet, not in code. Seed rows are in `src/sheetContract.js`.
