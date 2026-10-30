@@ -1,0 +1,354 @@
+{
+  "name": "Remind tomorrow",
+  "versionId": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2010",
+  "nodes": [
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2001",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2002",
+      "name": "Spreadsheet id",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "spreadsheet-id",
+              "name": "spreadsheetId",
+              "value": "PASTE_WILLOW_SHEET_ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2003",
+      "name": "Read settings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        520,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h34BxhkoN2OCAC9a",
+          "name": "Willow Sheets"
+        }
+      },
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Settings"
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2004",
+      "name": "Read services",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        780,
+        300
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h34BxhkoN2OCAC9a",
+          "name": "Willow Sheets"
+        }
+      },
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Services"
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2005",
+      "name": "Read bookings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        300
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h34BxhkoN2OCAC9a",
+          "name": "Willow Sheets"
+        }
+      },
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2006",
+      "name": "Choose tomorrow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const settings = Object.fromEntries(\n  $(\"Read settings\").all().map((item) => [item.json.key, String(item.json.value ?? \"\")]),\n);\nconst serviceName = Object.fromEntries(\n  $(\"Read services\").all().map((item) => [item.json.service_id, String(item.json.name ?? \"\")]),\n);\n\nconst now = new Date();\nconst tomorrow = addDays(salonDate(now, settings.timezone), 1);\nconst remindedAt = salonStamp(now, settings.timezone);\n\nconst due = $input.all().map((item) => item.json).filter((booking) => {\n  return String(booking.status ?? \"\").trim() === \"confirmed\"\n    && String(booking.email_opt_out ?? \"\").trim() !== \"yes\"\n    && String(booking.reminder_sent_at ?? \"\").trim() === \"\"\n    && String(booking.date ?? \"\").trim() === tomorrow;\n});\n\nreturn due.map((booking) => {\n  const name = serviceName[booking.service_id] || booking.service_id;\n  const text = [\n    `Reminder from ${settings.business_name}`,\n    \"\",\n    \"Your appointment is tomorrow.\",\n    \"\",\n    booking.customer_name,\n    name,\n    `${longDate(booking.date)}, ${booking.start_time}–${booking.end_time}`,\n    \"\",\n    settings.address,\n    settings.phone,\n    \"\",\n    \"To cancel or reschedule, reply to this email or call us.\",\n    \"To stop these emails, reply STOP.\",\n  ].join(\"\\n\");\n\n  return {\n    json: {\n      booking_id: booking.booking_id,\n      to: String(booking.customer_email ?? \"\").trim(),\n      subject: `Reminder: tomorrow at ${booking.start_time}, ${settings.business_name}`,\n      text,\n      reminder_sent_at: remindedAt,\n    },\n  };\n});\n\nfunction salonDate(instant, timeZone) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone,\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hourCycle: \"h23\",\n  }).formatToParts(instant);\n  const value = Object.fromEntries(parts.filter((part) => part.type !== \"literal\").map((part) => [part.type, part.value]));\n  return `${value.year}-${value.month}-${value.day}`;\n}\n\nfunction addDays(date, days) {\n  const [year, month, day] = date.split(\"-\").map(Number);\n  const shifted = new Date(Date.UTC(year, month - 1, day + days));\n  const pad = (part) => String(part).padStart(2, \"0\");\n  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;\n}\n\nfunction longDate(date) {\n  const [year, month, day] = date.split(\"-\").map(Number);\n  return new Intl.DateTimeFormat(\"en-US\", {\n    weekday: \"long\",\n    month: \"long\",\n    day: \"numeric\",\n    year: \"numeric\",\n    timeZone: \"UTC\",\n  }).format(new Date(Date.UTC(year, month - 1, day)));\n}\n\nfunction salonStamp(instant, timeZone) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone,\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"2-digit\",\n    minute: \"2-digit\",\n    second: \"2-digit\",\n    hourCycle: \"h23\",\n  }).formatToParts(instant);\n  const value = Object.fromEntries(parts.filter((part) => part.type !== \"literal\").map((part) => [part.type, part.value]));\n  const year = Number(value.year);\n  const month = Number(value.month);\n  const day = Number(value.day);\n  const hour = Number(value.hour) % 24;\n  const minute = Number(value.minute);\n  const second = Number(value.second);\n  const offsetMinutes = Math.round((Date.UTC(year, month - 1, day, hour, minute, second) - instant.getTime()) / 60000);\n  const sign = offsetMinutes >= 0 ? \"+\" : \"-\";\n  const absolute = Math.abs(offsetMinutes);\n  const pad = (part) => String(part).padStart(2, \"0\");\n  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;\n}\n"
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2007",
+      "name": "Email the customer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R6rD4Y4ub2UAT97u",
+          "name": "Willow Gmail"
+        }
+      },
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2008",
+      "name": "Mark reminder sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1820,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h34BxhkoN2OCAC9a",
+          "name": "Willow Sheets"
+        }
+      },
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_id": "={{ $('Choose tomorrow').item.json.booking_id }}",
+            "reminder_sent_at": "={{ $('Choose tomorrow').item.json.reminder_sent_at }}"
+          },
+          "matchingColumns": [
+            "booking_id"
+          ],
+          "schema": [
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reminder_sent_at",
+              "displayName": "reminder_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      }
+    },
+    {
+      "id": "d5f9b2c3-7e40-4b82-9d31-1c2f6a8b2009",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        40
+      ],
+      "parameters": {
+        "width": 540,
+        "height": 200,
+        "content": "Runs at 08:00 America/Chicago, the reminder_time in Settings.\n\nEmails the customer when the appointment is tomorrow. Skips cancelled rows and rows with email_opt_out set to yes.\n\nIf the computer is off at 08:00, that morning is missed. It does not send late."
+      }
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Spreadsheet id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spreadsheet id": {
+      "main": [
+        [
+          {
+            "node": "Read settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read settings": {
+      "main": [
+        [
+          {
+            "node": "Read services",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read services": {
+      "main": [
+        [
+          {
+            "node": "Read bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read bookings": {
+      "main": [
+        [
+          {
+            "node": "Choose tomorrow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Choose tomorrow": {
+      "main": [
+        [
+          {
+            "node": "Email the customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email the customer": {
+      "main": [
+        [
+          {
+            "node": "Mark reminder sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
