@@ -51,6 +51,10 @@ Every 5 minutes. New confirmed bookings go to the salon.
 
 19:30 America/Chicago. A visit that already ended today gets a review mail.
 
+![Report a failure](screenshots/report-a-failure.png)
+
+If one of those three fails on its schedule, this mails the owner. It stays off. n8n calls it anyway.
+
 ## Sheet
 
 Three tabs: Services, Settings, Bookings. Hours, prices, the salon email, and the mail times live in the sheet, not in code. Seed rows are in `src/sheetContract.js`.
