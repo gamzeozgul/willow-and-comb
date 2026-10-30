@@ -113,6 +113,7 @@ n8n polls the sheet. There is no public webhook. The page takes a lock and check
 - Salon mail can lag a few minutes, and only while the machine running n8n is on.
 - The 08:00 reminder and the 19:30 review do not catch up if that machine was off.
 - The form enforces the rules. A row typed straight into the sheet is trusted.
+- The customer email is not verified. The form checks the shape of the address, not the inbox.
 - A STOP reply is not read. The owner marks the sheet.
 - Date columns must stay plain text. A localized date is misread.
 - The free Apps Script page shows Google's "created by" banner.

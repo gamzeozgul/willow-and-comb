@@ -24,6 +24,26 @@ function memoryStore(bookings, ids = ["b-2001", "b-2002"]) {
   };
 }
 
+function confirmed(overrides = {}) {
+  return {
+    booking_id: "b-1",
+    created_at: "2026-10-18T10:00:00-05:00",
+    service_id: "womens-cut",
+    date: "2026-10-20",
+    start_time: "10:00",
+    end_time: "11:00",
+    customer_name: "Avery Quinn",
+    customer_email: "avery.quinn@example.com",
+    customer_phone: "",
+    status: "confirmed",
+    email_opt_out: "",
+    owner_notified_at: "",
+    reminder_sent_at: "",
+    review_sent_at: "",
+    ...overrides,
+  };
+}
+
 function request(overrides = {}) {
   return {
     service_id: "womens-cut",
@@ -87,6 +107,57 @@ describe("booking from the customer page", () => {
     });
     assert.equal(result.reason, "invalid");
     assert.equal(bookings.length, 0);
+  });
+
+  it("accepts a filled-in company field without saving a row", () => {
+    const bookings = [];
+    const result = bookAppointment({
+      settings,
+      services: seedServices,
+      now,
+      request: request({ company: "Acme" }),
+      store: memoryStore(bookings),
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.booking, undefined);
+    assert.match(result.message, /You're booked for Women's haircut & blow-dry on 2026-10-20 at 10:00/);
+    assert.equal(bookings.length, 0);
+  });
+
+  it("stops a third upcoming appointment for the same email", () => {
+    const bookings = [
+      confirmed({ date: "2026-10-20" }),
+      confirmed({ booking_id: "b-2", date: "2026-10-21", customer_email: "Avery.Quinn@Example.com" }),
+    ];
+    const result = bookAppointment({
+      settings,
+      services: seedServices,
+      now,
+      request: request({ date: "2026-10-22", customer_email: "avery.quinn@example.com" }),
+      store: memoryStore(bookings, ["b-2003"]),
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "too-many");
+    assert.match(result.message, /\+1 512 555 0148/);
+    assert.equal(bookings.length, 2);
+  });
+
+  it("lets the same email book again after earlier visits have ended", () => {
+    const bookings = [
+      confirmed({ date: "2026-10-18", start_time: "10:00", end_time: "11:00" }),
+      confirmed({ booking_id: "b-2", date: "2026-10-18", start_time: "12:00", end_time: "13:00", status: "cancelled" }),
+      confirmed({ booking_id: "b-3", date: "2026-10-21" }),
+    ];
+    const result = bookAppointment({
+      settings,
+      services: seedServices,
+      now,
+      request: request({ date: "2026-10-22", customer_email: "Avery.Quinn@Example.com" }),
+      store: memoryStore(bookings, ["b-2004"]),
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.booking.customer_email, "avery.quinn@example.com");
+    assert.equal(bookings.length, 4);
   });
 
   it("ignores a status sent by the browser", () => {

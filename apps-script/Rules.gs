@@ -306,6 +306,17 @@ function bookingsToReview({ settings, bookings, now }) {
   });
 }
 
+function countOpenAppointments(bookings, email, now, timeZone) {
+  assertNow(now);
+  const needle = String(email || "").trim().toLowerCase();
+  if (!needle) return 0;
+  return bookings.filter((booking) => {
+    if (booking.status !== "confirmed") return false;
+    if (String(booking.customer_email || "").trim().toLowerCase() !== needle) return false;
+    return bookingInterval(booking, timeZone).end.getTime() > now.getTime();
+  }).length;
+}
+
 function isCustomerMailDue(booking) {
   return booking.status === "confirmed" && booking.email_opt_out !== "yes";
 }
@@ -466,6 +477,7 @@ function publicCatalog(settings, services) {
 }
 
 function bookAppointment({ settings, services, now, request, store }) {
+  if (String(request.company || "").trim() !== "") return quietSuccess(settings, services, request);
   return store.withLock(() => {
     const service = services.find((row) => row.service_id === request.service_id);
     const decision = canBook({
@@ -486,7 +498,7 @@ function bookAppointment({ settings, services, now, request, store }) {
       start_time: String(request.start_time),
       end_time: decision.end_time,
       customer_name: String(request.customer_name || "").trim(),
-      customer_email: String(request.customer_email || "").trim(),
+      customer_email: String(request.customer_email || "").trim().toLowerCase(),
       customer_phone: String(request.customer_phone || "").trim(),
       status: "confirmed",
       email_opt_out: "",
@@ -496,6 +508,14 @@ function bookAppointment({ settings, services, now, request, store }) {
     };
     const errors = validateBooking(booking);
     if (errors.length > 0) return failure("invalid");
+    const open = countOpenAppointments(store.readBookings(), booking.customer_email, now, settings.timeZone);
+    if (open >= 2) {
+      return {
+        ok: false,
+        reason: "too-many",
+        message: `You already have two upcoming appointments. To book another, call ${settings.phone}.`,
+      };
+    }
     store.append(booking);
     return {
       ok: true,
@@ -503,6 +523,18 @@ function bookAppointment({ settings, services, now, request, store }) {
       message: `You're booked for ${service.name} on ${booking.date} at ${booking.start_time}. To cancel or reschedule, call ${settings.phone}.`,
     };
   });
+}
+
+function quietSuccess(settings, services, request) {
+  const service = services.find((row) => row.service_id === request.service_id);
+  const name = service ? service.name : "your visit";
+  const date = String(request.date || "").trim();
+  const start = String(request.start_time || "").trim();
+  const when = date && start ? ` for ${name} on ${date} at ${start}` : "";
+  return {
+    ok: true,
+    message: `You're booked${when}. To cancel or reschedule, call ${settings.phone}.`,
+  };
 }
 
 function failure(reason) {

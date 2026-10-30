@@ -74,6 +74,17 @@ export function bookingsToReview({ settings, bookings, now }) {
   });
 }
 
+export function countOpenAppointments(bookings, email, now, timeZone) {
+  assertNow(now);
+  const needle = String(email || "").trim().toLowerCase();
+  if (!needle) return 0;
+  return bookings.filter((booking) => {
+    if (booking.status !== "confirmed") return false;
+    if (String(booking.customer_email || "").trim().toLowerCase() !== needle) return false;
+    return bookingInterval(booking, timeZone).end.getTime() > now.getTime();
+  }).length;
+}
+
 function isCustomerMailDue(booking) {
   return booking.status === "confirmed" && booking.email_opt_out !== "yes";
 }
