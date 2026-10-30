@@ -1,9 +1,3 @@
-export const TABS = {
-  services: "Services",
-  settings: "Settings",
-  bookings: "Bookings",
-};
-
 export const SERVICE_COLUMNS = [
   "service_id",
   "name",

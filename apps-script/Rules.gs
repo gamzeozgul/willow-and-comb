@@ -1,11 +1,5 @@
 // Generated from src. Do not edit.
 
-var TABS = {
-  services: "Services",
-  settings: "Settings",
-  bookings: "Bookings",
-};
-
 var SERVICE_COLUMNS = [
   "service_id",
   "name",
