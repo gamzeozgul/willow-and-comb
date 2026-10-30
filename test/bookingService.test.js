@@ -124,6 +124,19 @@ describe("booking from the customer page", () => {
     assert.equal(bookings.length, 0);
   });
 
+  it("reads the booking list once inside the lock", () => {
+    const bookings = [];
+    const store = memoryStore(bookings);
+    let reads = 0;
+    const readBookings = store.readBookings;
+    store.readBookings = () => {
+      reads += 1;
+      return readBookings();
+    };
+    bookAppointment({ settings, services: seedServices, now, request: request(), store });
+    assert.equal(reads, 1);
+  });
+
   it("stops a third upcoming appointment for the same email", () => {
     const bookings = [
       confirmed({ date: "2026-10-20" }),

@@ -1,6 +1,8 @@
 import { canBook, countOpenAppointments, readSettings, salonTimestamp } from "./bookingRules.js";
 import { validateBooking, validateSettings } from "./sheetContract.js";
 
+const MAX_UPCOMING_PER_EMAIL = 2;
+
 const MESSAGES = {
   past: "That time has already passed.",
   "too-soon": "Please book at least 2 hours ahead.",
@@ -11,6 +13,7 @@ const MESSAGES = {
   inactive: "That service is no longer available.",
   "unknown-service": "Please choose a service.",
   invalid: "Please check the name and email.",
+  "too-many": (phone) => `You already have two upcoming appointments. To book another, call ${phone}.`,
 };
 
 export function describeSettings(rows) {
@@ -38,11 +41,12 @@ export function publicCatalog(settings, services) {
 export function bookAppointment({ settings, services, now, request, store }) {
   if (String(request.leave_blank || "").trim() !== "") return quietSuccess(settings, services, request);
   return store.withLock(() => {
+    const bookings = store.readBookings();
     const service = services.find((row) => row.service_id === request.service_id);
     const decision = canBook({
       settings,
       service,
-      bookings: store.readBookings(),
+      bookings,
       now,
       date: String(request.date || ""),
       start_time: String(request.start_time || ""),
@@ -67,14 +71,8 @@ export function bookAppointment({ settings, services, now, request, store }) {
     };
     const errors = validateBooking(booking);
     if (errors.length > 0) return failure("invalid");
-    const open = countOpenAppointments(store.readBookings(), booking.customer_email, now, settings.timeZone);
-    if (open >= 2) {
-      return {
-        ok: false,
-        reason: "too-many",
-        message: `You already have two upcoming appointments. To book another, call ${settings.phone}.`,
-      };
-    }
+    const open = countOpenAppointments(bookings, booking.customer_email, now, settings.timeZone);
+    if (open >= MAX_UPCOMING_PER_EMAIL) return failure("too-many", settings.phone);
     store.append(booking);
     return {
       ok: true,
@@ -96,6 +94,7 @@ function quietSuccess(settings, services, request) {
   };
 }
 
-function failure(reason) {
-  return { ok: false, reason, message: MESSAGES[reason] };
+function failure(reason, phone) {
+  const text = MESSAGES[reason];
+  return { ok: false, reason, message: typeof text === "function" ? text(phone) : text };
 }
