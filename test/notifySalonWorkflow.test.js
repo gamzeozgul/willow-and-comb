@@ -25,6 +25,7 @@ describe("the salon notification workflow", () => {
     assert.equal(trigger.parameters.rule.interval[0].minutesInterval, 5);
     assert.equal(workflow.nodes.some((node) => String(node.type).includes("webhook")), false);
     assert.equal(workflow.active, false);
+    assert.match(workflow.versionId, /^[0-9a-f-]{36}$/);
     const mail = workflow.nodes.find((node) => node.name === "Email the salon");
     assert.equal(mail.parameters.options.appendAttribution, false);
     const mark = workflow.nodes.find((node) => node.name === "Mark as told");
