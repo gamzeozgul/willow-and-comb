@@ -1,0 +1,321 @@
+{
+  "name": "Notify the salon",
+  "nodes": [
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1001",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1002",
+      "name": "Spreadsheet id",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "spreadsheet-id",
+              "name": "spreadsheetId",
+              "value": "PASTE_WILLOW_SHEET_ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1003",
+      "name": "Read settings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Settings"
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1004",
+      "name": "Read services",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        780,
+        300
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Services"
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1005",
+      "name": "Read bookings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        300
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1006",
+      "name": "Choose unsent bookings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const settings = Object.fromEntries(\n  $(\"Read settings\").all().map((item) => [item.json.key, String(item.json.value ?? \"\")]),\n);\nconst serviceName = Object.fromEntries(\n  $(\"Read services\").all().map((item) => [item.json.service_id, String(item.json.name ?? \"\")]),\n);\n\nconst due = $input.all().map((item) => item.json).filter((booking) => {\n  return String(booking.status ?? \"\").trim() === \"confirmed\" && String(booking.owner_notified_at ?? \"\").trim() === \"\";\n});\n\nconst notifiedAt = salonStamp(settings.timezone);\n\nreturn due.map((booking) => {\n  const phone = String(booking.customer_phone ?? \"\").trim();\n  const name = serviceName[booking.service_id] || booking.service_id;\n  const text = [\n    `New appointment at ${settings.business_name}`,\n    \"\",\n    booking.customer_name,\n    booking.customer_email,\n    phone || \"No phone number\",\n    \"\",\n    name,\n    `${longDate(booking.date)}, ${booking.start_time}–${booking.end_time}`,\n    \"\",\n    `Booking ${booking.booking_id}`,\n  ].join(\"\\n\");\n\n  return {\n    json: {\n      booking_id: booking.booking_id,\n      to: settings.salon_email,\n      subject: `New booking: ${booking.customer_name}, ${booking.date} ${booking.start_time}`,\n      text,\n      owner_notified_at: notifiedAt,\n    },\n  };\n});\n\nfunction longDate(date) {\n  const [year, month, day] = date.split(\"-\").map(Number);\n  return new Intl.DateTimeFormat(\"en-US\", {\n    weekday: \"long\",\n    month: \"long\",\n    day: \"numeric\",\n    year: \"numeric\",\n    timeZone: \"UTC\",\n  }).format(new Date(Date.UTC(year, month - 1, day)));\n}\n\nfunction salonStamp(timeZone) {\n  const now = new Date();\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone,\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"2-digit\",\n    minute: \"2-digit\",\n    second: \"2-digit\",\n    hourCycle: \"h23\",\n  }).formatToParts(now);\n  const value = Object.fromEntries(parts.filter((part) => part.type !== \"literal\").map((part) => [part.type, part.value]));\n  const year = Number(value.year);\n  const month = Number(value.month);\n  const day = Number(value.day);\n  const hour = Number(value.hour) % 24;\n  const minute = Number(value.minute);\n  const second = Number(value.second);\n  const offsetMinutes = Math.round((Date.UTC(year, month - 1, day, hour, minute, second) - now.getTime()) / 60000);\n  const sign = offsetMinutes >= 0 ? \"+\" : \"-\";\n  const absolute = Math.abs(offsetMinutes);\n  const pad = (part) => String(part).padStart(2, \"0\");\n  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;\n}\n"
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1007",
+      "name": "Email the salon",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1008",
+      "name": "Mark as told",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1820,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Spreadsheet id').first().json.spreadsheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_id": "={{ $('Choose unsent bookings').item.json.booking_id }}",
+            "owner_notified_at": "={{ $('Choose unsent bookings').item.json.owner_notified_at }}"
+          },
+          "matchingColumns": [
+            "booking_id"
+          ],
+          "schema": [
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "owner_notified_at",
+              "displayName": "owner_notified_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      }
+    },
+    {
+      "id": "c4e8a1b2-6d3f-4a91-8c20-0b1e5f7a1009",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        40
+      ],
+      "parameters": {
+        "width": 520,
+        "height": 200,
+        "content": "Paste the Willow & Comb spreadsheet id into Spreadsheet id. It is the long id in the sheet URL, between /d/ and /edit.\n\nConnect PASTE_OWNER_EMAIL on every Google Sheets node and on Gmail. Leave this workflow off until a test mail arrives."
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Spreadsheet id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spreadsheet id": {
+      "main": [
+        [
+          {
+            "node": "Read settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read settings": {
+      "main": [
+        [
+          {
+            "node": "Read services",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read services": {
+      "main": [
+        [
+          {
+            "node": "Read bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read bookings": {
+      "main": [
+        [
+          {
+            "node": "Choose unsent bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Choose unsent bookings": {
+      "main": [
+        [
+          {
+            "node": "Email the salon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email the salon": {
+      "main": [
+        [
+          {
+            "node": "Mark as told",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
